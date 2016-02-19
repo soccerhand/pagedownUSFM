@@ -551,7 +551,7 @@ else
         }
         function renderGeneralCommand(command, level, remaining) {
             if(php.array_key_exists(command, that.substitution_table)) {
-                html_command = that.substitution_table[command];
+                let html_command = that.substitution_table[command];
                 if(php.sizeof(html_command) > 1) {
                     that.usfm_text
                         .printItalicsToBody(
