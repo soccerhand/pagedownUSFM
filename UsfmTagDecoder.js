@@ -217,27 +217,30 @@ else
             //wfDebug("Internal encoding: ".mb_internal_encoding());
             //wfDebug("UTF-8 compatible: ".mb_check_encoding(raw_text, "UTF-8"));
             //wfDebug("ISO-8859-1 compatible: ".mb_check_encoding(raw_text, "ISO-8859-1"));
-            let raw_command, level;
+            let command   = { value : '' },
+                level     = { value : '' },
+                remaining = { value : '' };
+            let raw_command;
             let usfm_segments = php.explode("\\", raw_text);
             for(let i = 0; i < php.sizeof(usfm_segments); i++) {
-                let remaining = php.strpbrk(usfm_segments[i], " \n");
+                remaining.value = php.strpbrk(usfm_segments[i], " \n");
                 /*yil debug
                 that.usfm_text.printHtmlText("<br/>remaining: ");
-                that.usfm_text.printHtmlText(remaining);
+                that.usfm_text.printHtmlText(remaining.value);
                 that.usfm_text.printHtmlText("<br/>");*/
-                if(remaining === false) {
+                if(remaining.value === false) {
                     raw_command = usfm_segments[i];
-                    remaining   = '';
+                    remaining.value   = '';
                 }
                 else {
                     raw_command = php.substr(
                         usfm_segments[i], 0,
                         php.strlen(usfm_segments[i]) -
-                        php.strlen(remaining)
+                        php.strlen(remaining.value)
                     );
-                    remaining   = php.trim(remaining, " \n\t\r\0");
-                    if(php./*mb_*/substr(remaining, php./*mb_*/strlen(remaining) - 1, 1) != "\xA0") {
-                        remaining += " ";
+                    remaining.value   = php.trim(remaining.value, " \n\t\r\0");
+                    if(php./*mb_*/substr(remaining.value, php./*mb_*/strlen(remaining.value) - 1, 1) != "\xA0") {
+                        remaining.value += " ";
                     }
                 }
                 if(raw_command == '') {
@@ -257,8 +260,8 @@ else
                             //that.usfm_text.printHtmlText("<br/>raw_command=: ".raw_command);
                             let leftover = php./*mb_*/substr(raw_command, pos + 1, cmdlen);
                             //that.usfm_text.printHtmlText("<br/>leftover=: ".  leftover);
-                            remaining = leftover + ' ' + remaining;
-                            //that.usfm_text.printHtmlText("<br/>remaining=: ".  remaining);
+                            remaining.value = leftover + ' ' + remaining.value;
+                            //that.usfm_text.printHtmlText("<br/>remaining=: ".  remaining.value);
                             raw_command = php./*mb_*/substr(raw_command, 0, pos + 1);
                             //that.usfm_text.printHtmlText("<br/>raw_command=: ".raw_command);
                         }
@@ -270,97 +273,97 @@ else
                 that.usfm_text.printHtmlText("<br/>");*/
                 //filter out number digits from raw command
                 let main_command_length = php.strcspn(raw_command, '0123456789');
-                let command             = php.substr(raw_command, 0, main_command_length);
+                command.value             = php.substr(raw_command, 0, main_command_length);
                 if(php.strlen(raw_command) > main_command_length) {
-                    level = php.strval(php.substr(raw_command, main_command_length));
+                    level.value = php.strval(php.substr(raw_command, main_command_length));
                 }
                 else {
-                    level = 1;
+                    level.value = 1;
                 }
                 /*yil debug
                 that.usfm_text.printHtmlText("<br/>command: ");
-                that.usfm_text.printHtmlText(command);
+                that.usfm_text.printHtmlText(command.value);
                 that.usfm_text.printHtmlText("<br/>");*/
                 //port it case by case basis
-                if((command == 'h') || (php.substr(command, 0, 2) == 'id') ||
-                    (command == 'rem') || (command == 'sts') ||
-                    (php.substr(command, 0, 3) == 'toc')
+                if((command.value == 'h') || (php.substr(command.value, 0, 2) == 'id') ||
+                    (command.value == 'rem') || (command.value == 'sts') ||
+                    (php.substr(command.value, 0, 3) == 'toc')
                 ) {
                     renderIdentification(command, level, remaining);
                 }
-                else if(command == 'ip') {
+                else if(command.value == 'ip') {
                     renderParagraph(command, level, remaining);
                 }
-                else if((command == 'is') || (command == 'imt')) {
+                else if((command.value == 'is') || (command.value == 'imt')) {
                     renderTitleOrHeadingOrLabel(command, level, remaining);
                 }
-                else if((php.substr(command, 0, 1) == 'i') &&
-                    (php.substr(command, 0, 2) != 'it')
+                else if((php.substr(command.value, 0, 1) == 'i') &&
+                    (php.substr(command.value, 0, 2) != 'it')
                 ) {
                     renderIntroduction(command, level, remaining);
                 }
-                else if((php.substr(command, 0, 1) == 'm') &&
-                    (command != 'm') && (command != 'mi')
+                else if((php.substr(command.value, 0, 1) == 'm') &&
+                    (command.value != 'm') && (command.value != 'mi')
                 ) {
                     renderTitleOrHeadingOrLabel(command, level, remaining);
                 }
-                else if((php.substr(command, 0, 1) == 's') &&
-                    (php.substr(command, 0, 2) != 'sc') &&
-                    (php.substr(command, 0, 3) != 'sig') &&
-                    (php.substr(command, 0, 3) != 'sls')
+                else if((php.substr(command.value, 0, 1) == 's') &&
+                    (php.substr(command.value, 0, 2) != 'sc') &&
+                    (php.substr(command.value, 0, 3) != 'sig') &&
+                    (php.substr(command.value, 0, 3) != 'sls')
                 ) {
-                    if(level == 5) {
+                    if(level.value == 5) {
                         //Yvonne substitue s5 with <hr>
-                        command += level;
-                        level = 1;
+                        command.value += level.value;
+                        level.value = 1;
                         renderGeneralCommand(command, level, remaining);
                     }
                     else {
                         renderTitleOrHeadingOrLabel(command, level, remaining);
                     }
                 }
-                else if((command == 'd') || (php.substr(command, 0, 1) == 'r')) {
+                else if((command.value == 'd') || (php.substr(command.value, 0, 1) == 'r')) {
                     renderTitleOrHeadingOrLabel(command, level, remaining);
                 }
-                else if((php.substr(command, 0, 1) == 'c') ||
-                    (php.substr(command, 0, 1) == 'v')
+                else if((php.substr(command.value, 0, 1) == 'c') ||
+                    (php.substr(command.value, 0, 1) == 'v')
                 ) {
                     renderChapterOrVerse(
                         raw_command, command,
                         level, remaining
                     );
                 }
-                else if((php.substr(command, 0, 1) == 'q') &&
-                    (php.substr(command, 0, 2) != 'qt')
+                else if((php.substr(command.value, 0, 1) == 'q') &&
+                    (php.substr(command.value, 0, 2) != 'qt')
                 ) {
                     renderPoetry(command, level, remaining);
                 }
-                else if((php.substr(command, 0, 1) == 'p') && (command != 'pb') &&
-                    (php.substr(command, 0, 2) != 'pn') &&
-                    (php.substr(command, 0, 3) != 'pro')
+                else if((php.substr(command.value, 0, 1) == 'p') && (command.value != 'pb') &&
+                    (php.substr(command.value, 0, 2) != 'pn') &&
+                    (php.substr(command.value, 0, 3) != 'pro')
                 ) {
                     renderParagraph(command, level, remaining);
                 }
-                else if((php.substr(command, 0, 1) == 't') &&
-                    (php.substr(command, 0, 2) != 'tl')
+                else if((php.substr(command.value, 0, 1) == 't') &&
+                    (php.substr(command.value, 0, 2) != 'tl')
                 ) {
-                    renderTable(command, remaining);
+                    renderTable(command, level);
                 }
-                else if((command == 'b') || (command == 'cls') ||
-                    (php.substr(command, 0, 2) == 'li') ||
-                    (command == 'm') || (command == 'mi') ||
-                    (command == 'nb')
+                else if((command.value == 'b') || (command.value == 'cls') ||
+                    (php.substr(command.value, 0, 2) == 'li') ||
+                    (command.value == 'm') || (command.value == 'mi') ||
+                    (command.value == 'nb')
                 ) {
                     renderParagraph(command, level, remaining);
                 }
-                else if((php.substr(command, 0, 1) == 'f') &&
-                    (php.substr(command, 0, 3) != 'fig')
+                else if((php.substr(command.value, 0, 1) == 'f') &&
+                    (php.substr(command.value, 0, 3) != 'fig')
                 ) {
-                    renderFootnoteOrCrossReference(raw_command, remaining);
+                    renderFootnoteOrCrossReference({ value: raw_command }, remaining);
                     // located in UsfmTag.3.php
                 }
-                else if(php.substr(command, 0, 1) == 'x') {
-                    renderFootnoteOrCrossReference(raw_command, remaining);
+                else if(php.substr(command.value, 0, 1) == 'x') {
+                    renderFootnoteOrCrossReference({ value: raw_command }, remaining);
                     // located in UsfmTag.3.php
                 }
                 else {
@@ -381,33 +384,33 @@ else
             renderGeneralCommand(command, level, remaining);
         }
         function renderChapterOrVerse(raw_command, command, level, remaining) {
-            remaining = php.trim(remaining, " ");
-            if((php.substr(command, 0, 1) == 'v') &&
-                (php.strlen(raw_command) == php.strlen(command))
+            remaining.value = php.trim(remaining.value, " ");
+            if((php.substr(command.value, 0, 1) == 'v') &&
+                (php.strlen(raw_command) == php.strlen(command.value))
             ) {
-                level = extractSubCommand(remaining);
+                level.value = extractSubCommand(remaining);
             }
-            switch(command) {
+            switch(command.value) {
                 case 'c':
-                    that.usfm_text.setChapterNumber(remaining);
+                    that.usfm_text.setChapterNumber(remaining.value);
                     break;
                 case 'ca':
-                    that.usfm_text.setAlternateChapterNumber(remaining);
+                    that.usfm_text.setAlternateChapterNumber(remaining.value);
                     break;
                 case 'cl':
                     // 10 NOV 2015, Phil Hopper, Issue #368: This is not currently needed on door43.org
-                    //that.usfm_text.setChapterLabel(remaining);
+                    //that.usfm_text.setChapterLabel(remaining.value);
                     break;
                 case 'cp':
-                    that.usfm_text.setPublishedChapterNumber(remaining);
+                    that.usfm_text.setPublishedChapterNumber(remaining.value);
                     break;
                 case 'cd':
                     switchParagraph(command, level);
-                    that.usfm_text.printHtmlText(remaining);
+                    that.usfm_text.printHtmlText(remaining.value);
                     break;
                 case 'v':
-                    that.usfm_text.setVerseNumber(level);
-                    that.usfm_text.printHtmlText(remaining);
+                    that.usfm_text.setVerseNumber(level.value);
+                    that.usfm_text.printHtmlText(remaining.value);
                     break;
                 case 'va':
                     //yil verse_number is not initialized
@@ -418,7 +421,7 @@ else
                     //that.usfm_text.setPublishedChapterNumber(verse_number);
                     break;
                 default:
-                    that.usfm_text.printHtmlText(remaining);
+                    that.usfm_text.printHtmlText(remaining.value);
             }
         }
 
@@ -429,14 +432,14 @@ else
         }
         //yil added case for 'b' to close out paragraph
         function renderParagraph(command, level, remaining) {
-            switch(command) {
+            switch(command.value) {
                 case 'nb':
                     that.usfm_text.flushPendingDropCapNumeral(true);
-                    that.usfm_text.printHtmlText(remaining);
+                    that.usfm_text.printHtmlText(remaining.value);
                     break;
                 case 'li':
-                    that.usfm_text.switchListLevel(level);
-                    that.usfm_text.printHtmlText("<li class='usfm'>" + remaining);
+                    that.usfm_text.switchListLevel(level.value);
+                    that.usfm_text.printHtmlText("<li class='usfm'>" + remaining.value);
                     break;
                 case 'b':
                     renderGeneralCommand(command, level, remaining);
@@ -449,34 +452,34 @@ else
                     renderGeneralCommand(command, level, remaining);
             }
         }
-        function renderTable(command, remaining) {
-            switch(command) {
+        function renderTable(command, level, remaining) {
+            switch(command.value) {
                 case 'tr':
                     that.usfm_text.flushPendingTableColumns();
                     break;
                 case 'th':
-                    that.usfm_text.insertTableColumn(true, false, remaining);
+                    that.usfm_text.insertTableColumn(true, false, remaining.value);
                     break;
                 case 'thr':
-                    that.usfm_text.insertTableColumn(true, true, remaining);
+                    that.usfm_text.insertTableColumn(true, true, remaining.value);
                     break;
                 case 'tc':
-                    that.usfm_text.insertTableColumn(false, false, remaining);
+                    that.usfm_text.insertTableColumn(false, false, remaining.value);
                     break;
                 case 'tcr':
-                    that.usfm_text.insertTableColumn(false, true, remaining);
+                    that.usfm_text.insertTableColumn(false, true, remaining.value);
             }
         }
         function renderFootnoteOrCrossReference(command, remaining) {
-            switch(command) {
+            switch(command.value) {
                 case 'x':
                 case 'f':
                 case 'fe':
-                    if(php.substr(remaining, 1, 1) == ' ') {
+                    if(php.substr(remaining.value, 1, 1) == ' ') {
                         extractSubCommand(remaining);
                     }
-                    if((php./*mb_*/strlen(remaining) <= MAX_SELAH_CROSS_REFERENCES_LENGTH)
-                        && (php.strpos(remaining, ' ') !== false) && (command = 'x')
+                    if((php./*mb_*/strlen(remaining.value) <= MAX_SELAH_CROSS_REFERENCES_LENGTH)
+                        && (php.strpos(remaining.value, ' ') !== false) && (command.value = 'x')
                     ) {
                         this.is_selah_cross_reference = true;
                         renderGeneralCommand(command, 1, remaining);
@@ -484,8 +487,8 @@ else
                     else {
                         this.is_selah_cross_reference = false;
                         that.usfm_text.newFooterEntry();
-                        //that.usfm_text.printHtmlTextToFooter(remaining);
-                        that.usfm_text.printHtmlText(remaining);
+                        //that.usfm_text.printHtmlTextToFooter(remaining.value);
+                        that.usfm_text.printHtmlText(remaining.value);
                     }
                     break;
                 case 'x*':
@@ -496,36 +499,36 @@ else
                     }
                     else {
                         that.usfm_text.closeFooterEntry();
-                        that.usfm_text.printHtmlText(remaining);
+                        that.usfm_text.printHtmlText(remaining.value);
                     }
                     break;
                 case 'fk':
                 case 'xk':
                     //that.usfm_text
-                    //     .printHtmlTextToFooter(netscapeCapitalize(remaining));
+                    //     .printHtmlTextToFooter(netscapeCapitalize(remaining.value));
                     that.usfm_text
-                        .printHtmlText(netscapeCapitalize(remaining));
+                        .printHtmlText(netscapeCapitalize(remaining.value));
                     break;
                 default:
                     if(array_key_exists(
-                        command,
+                        command.value,
                         this.footnote_substitution_table
                     )) {
-                        setting   = this.footnote_substitution_table[command];
-                        remaining = setting[BEFORE_REMAINING] + remaining .
+                        setting   = this.footnote_substitution_table[command.value];
+                        remaining.value = setting[BEFORE_REMAINING] + remaining.value .
                             setting[AFTER_REMAINING];
                     }
-                    //that.usfm_text.printHtmlTextToFooter(remaining);
-                    that.usfm_text.printHtmlText(remaining);
+                    //that.usfm_text.printHtmlTextToFooter(remaining.value);
+                    that.usfm_text.printHtmlText(remaining.value);
             }
         }
-        function renderOther(command, remaining) {
-            switch(command) {
+        function renderOther(raw_command, remaining) {
+            switch(raw_command) {
                 case 'nd':
                     that.usfm_text.printHtmlText(netscapeCapitalize(remaining));
                     break;
                 case 'add': //Yvonne processing add and add* tag here to fix space before punctuation problem
-                    renderGeneralCommand(command, 1, trim(remaining)); //get rid of space at the end
+                    renderGeneralCommand({ value : raw_command }, 1, trim(remaining)); //get rid of space at the end
                     break;
                 case 'add*': //do not add space if remaining start with punctuation
                     if(php.ctype_punct(php.substr(remaining, 0, 1))) {
@@ -536,22 +539,22 @@ else
                     }
                     break;
                 default:
-                    renderGeneralCommand(command, 1, remaining);
+                    renderGeneralCommand({ value : raw_command }, 1, remaining);
             }
         }
         function displayUnsupportedCommand(command, level, remaining) {
-            if(level > 1) {
-                command = command + level;
+            if(level.value > 1) {
+                command.value = command.value + level.value;
             }
             //yil debug
             //that.usfm_text
-            //        .printHtmlText(" USFMTag alert: Encountered unsupported command:".command.' '.remaining."\n");
+            //        .printHtmlText(" USFMTag alert: Encountered unsupported command:".command.value.' '.remaining.value."\n");
             that.usfm_text
-                .printHtmlText("<!-- usfm:\\" + command + ' ' + remaining + " -.\n");
+                .printHtmlText("<!-- usfm:\\" + command.value + ' ' + remaining.value + " -.\n");
         }
         function renderGeneralCommand(command, level, remaining) {
-            if(php.array_key_exists(command, that.substitution_table)) {
-                let html_command = that.substitution_table[command];
+            if(php.array_key_exists(command.value, that.substitution_table)) {
+                let html_command = that.substitution_table[command.value];
                 if(php.sizeof(html_command) > 1) {
                     that.usfm_text
                         .printItalicsToBody(
@@ -562,14 +565,14 @@ else
                 else {
                     that.usfm_text.printHtmlText(html_command[IF_NORMAL]);
                 }
-                that.usfm_text.printHtmlText(remaining);
+                that.usfm_text.printHtmlText(remaining.value);
             }
-            else if(php.array_key_exists(command, that.paragraph_settings)) {
+            else if(php.array_key_exists(command.value, that.paragraph_settings)) {
                 switchParagraph(command, level);
-                that.usfm_text.printHtmlText(remaining);
+                that.usfm_text.printHtmlText(remaining.value);
             }
-            else if(php.array_key_exists(command, that.title_settings)) {
-                printTitle(command, level, remaining);
+            else if(php.array_key_exists(command.value, that.title_settings)) {
+                printTitle(command, level, remaining.value);
             }
             else {
                 displayUnsupportedCommand(command, level, remaining);
@@ -578,29 +581,29 @@ else
 
         //private
         function extractSubCommand(remaining) {
-            let second_whitespace = php.strpos(remaining, ' ');
+            let second_whitespace = php.strpos(remaining.value, ' ');
             if(second_whitespace === false) {
-                second_whitespace = php.strlen(remaining);
+                second_whitespace = php.strlen(remaining.value);
             }
-            let result    = php.substr(remaining, 0, second_whitespace);
-            remaining = php.substr(remaining, second_whitespace + 1);
+            let result    = php.substr(remaining.value, 0, second_whitespace);
+            remaining.value = php.substr(remaining.value, second_whitespace + 1);
             return result;
         }
         function switchParagraph(command, level) {
-            let setting = that.paragraph_settings[command];
+            let setting = that.paragraph_settings[command.value];
             that.usfm_text
                 .switchParagraph(
-                    level + setting[BASE_LEVEL] - 1,
+                    level.value + setting[BASE_LEVEL] - 1,
                     setting[IS_ITALIC],
                     setting[ALIGNMENT],
                     setting[PARAGRAPH_CLASS]
                 );
         }
         function printTitle(command, level, content) {
-            let setting = that.title_settings[command];
+            let setting = that.title_settings[command.value];
             that.usfm_text
                 .printTitle(
-                    level + setting[BASE_LEVEL] - 1,
+                    level.value + setting[BASE_LEVEL] - 1,
                     setting[IS_ITALIC], content
                 );
         }
